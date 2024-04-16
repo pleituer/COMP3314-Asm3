@@ -4,4 +4,8 @@
 
 ### Models
 
+#### Model 1 (Based on HOG features)
+
+#### Model 2 (Based on K-Means feature learning)
+
 ### Methodology 
