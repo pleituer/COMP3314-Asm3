@@ -78,3 +78,7 @@ As in Model 5, we have described an extremely lightweight model for this task, u
 ### Final Model
 
 From all the models, we have selected the best performing one, which is Model 3, and applied augmentation, which in this case would be flipping sideways, to increase our dataset from 50k to 100k. Augmentation has shown to have very significant impact on the final accuracy, where when performing augmentation on Model 3, we say a whopping $4.3\%$ increase in testing accuracy ($75.73\% \to 80.04\%$).
+
+Here is the confusion matrix of our final model:
+
+![Confusion Matrix](./final_cm.png)
