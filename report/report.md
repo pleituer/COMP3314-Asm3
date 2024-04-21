@@ -75,10 +75,23 @@ In fact, when fine tuning the regularization parameter $C$ of the HOG model (fir
 
 As in Model 5, we have described an extremely lightweight model for this task, using it, we are able to look through a lot of parameter combinations, and brute-force our way. However, unlike the regularization parameter, we did not make use of that algorithm, as we have noticed that the parameter-to-accuracy curve is not concave, but has quite some noise in it, and that pretty much all parameters are discrete and only span a small range, hence brute-force is highly feasible. 
 
+![HOG LDA](./hog_lda.png)
+
+![EOH](./eoh.png)
+
+![Daisy 1](./daisy1.png)
+
+![Daisy 2](./daisy2.png)
+
+![Daisy 3](./daisy3.png)
+
+![LBP Params](./lbp_params.png)
+
+
 ### Final Model
 
 From all the models, we have selected the best performing one, which is Model 3, and applied augmentation, which in this case would be flipping sideways, to increase our dataset from 50k to 100k. Augmentation has shown to have very significant impact on the final accuracy, where when performing augmentation on Model 3, we say a whopping $4.3\%$ increase in testing accuracy ($75.73\% \to 80.04\%$).
 
-Here is the confusion matrix of our final model:
+Here is the confusion matrix of our final model (placeholder):
 
 ![Confusion Matrix](./final_cm.png)
