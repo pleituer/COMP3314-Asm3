@@ -5,33 +5,35 @@ In this challenge, we need to create a model that classify images into multiple 
 
 ### Models
 
+Our models mainly surrounded SVMs as it has shown in some of our initial testing to outperform other classifiers.
+
 #### Model 1 (Based solely on HOG features)
 
-When doing research on image classification, we see HOG (Histogram of Gradients) is widely used and is capable of providing promising results. We used both `sklearn-image` and `cv2` to generate the HOG features, and we see `cv2` generate the features significantly faster. 
+When doing research on image classification, we see HOG (Histogram of Gradients) is widely used and is capable of providing promising results ([This implementation found online achieved $70\%$ accuracy](https://github.com/hudara/cifar-10/blob/master/cifar-10.ipynb)). We used both `sklearn-image` and `cv2` to generate the HOG features, and we see `cv2` generate the features significantly faster. 
 
 After generating the HOG features, instead of directly feeding into PCA and the SVM like many do, we decided to take a different approach. We notice that we can use LDA (Linear Discriminant Analysis), a supervised learning model, to encode the features into a fewer dimensions and pass onto the SVM to perform classification. As LDA trains to cluster the same labeled data and isolate those with different labels, we can get a much better clustering on the data which makes it easier for the classifier to classify the data. However a limitation of LDA is that it cannot transform the featues into higher dimensions than `n_classes - 1`, in this case, the maximum dimensions that LDA can tranform to is 9. Hence, instead of passing the HOG features to LDA then to SVM, we reduce the dimensions using PCA, and we use LDA to provide "extra" information on the data, which when tested, we see significant boost in the accuracy of the SVM. 
 
 Moreover, instead of simply using `lda.transform` to encode the data, we first computed the centroids of each class, then computed the inverse distance to each of the centroids, hence for those close to a center of a class, they are projected far away from the origin, making classification easier. We also tested this method, and also saw some increase in accuracy.
 
-Lastly, we decided to blur the original image to 4 by 4 images, then concatenated alongisde with the HOG features, befor feeding into PCA and LDA. The idea behind is different classes have different background colors, like planes and boats have bluer background, while deers and birds have generally greener background, hence aiding the model to classify. However we only see some minor increase in accuracy.
+Lastly, we decided to blur the original image to 4 by 4 images (splitting the images into 16 4x4 patches, then taking the average of each patch), then concatenated alongisde with the HOG features, befor feeding into PCA and LDA. The idea behind is different classes have different background colors, like planes and boats have bluer background, while deers and birds have generally greener background, hence aiding the model to classify. However we only see some minor increase in accuracy.
 
-In general, the following is our model utilizing HOG Features: 
-
-<inserts diagram here>
+In general, our model uses HOG and blurred out version of the orignial image, with LDA encodings, then fed to a PCA tranformer and lastly to SVM.
 
 For the fine tuning of parameters, we arbitarily set PCA to reduce to 160 dimensions, while other parmaters are fine tuned with methods explained at the end.
 
 #### Model 2 (Based on K-Means feature learning)
 
-We employ a technique known as patch-based feature extraction to analyze images (\<paper-link>). This method involves dividing each image into smaller, overlapping sections, called "patches". These 6x6 patches are then used as input for our machine learning models, allowing us to capture local information about each image, such as textures or shapes, that might be lost if we were to analyze the image as a whole. We identify this method as we conduct our research on image pre-processing by reading various academic paper.
+We employ a technique known as [patch-based feature extraction](https://cs.stanford.edu/~acoates/papers/coatesleeng_aistats_2011.pdf) to analyze images. This method involves dividing each image into smaller, overlapping sections, called "patches". These 6x6 patches are then used as input for our machine learning models, allowing us to capture local information about each image, such as textures or shapes, that might be lost if we were to analyze the image as a whole. We identify this method as we conduct our research on image pre-processing by reading various academic paper.
 
 We whiten and standardize each patches, and then use a KMeans clustering algorithm to further process these patches. The KMeans algorithm groups similar patches together, forming clusters. Each cluster represents a common feature found in our images. The algorithm assigns each patch to the cluster that it most closely resembles, effectively transforming our original image data into a new set of features based on the presence of these common elements, similar to dictionary learning.
 
-Once we have our new feature set, we can use it to train a Support Vector Machine (SVM) classifier. The SVM model is a powerful machine learning algorithm that can classify data into different categories. In our case, it will classify images based on the features extracted from the patches. 
-
-The Support Vector Machine we have chosen is the LinearSVC. It allows faster calculation on high-dimensional data, particularly useful for our data input. Our data input is susceptible to dimensionality reduction, in which a slightly decrease in dimension leads to a sharp drop in prediction accuracy. We also find that LinearSVC performs better than kernel SVC using the input from KMeans algorithm.
+Once we have our new feature set, we can use it to train a Support Vector Machine (SVM) classifier. The SVM model is a powerful machine learning algorithm that can classify data into different categories. In our case, it will classify images based on the features extracted from the patches. The Support Vector Machine we have chosen is the LinearSVC. It allows faster calculation on high-dimensional data, particularly useful for our data input. Our data input is susceptible to dimensionality reduction, in which a slightly decrease in dimension leads to a sharp drop in prediction accuracy. We also find that LinearSVC performs better than kernel SVC using the input from KMeans algorithm.
 
 However, as the data dimension is very large of size at least 50000 x 3200, this method costs hours of training to secure a relatively satisfactory result. 
+
+Following this path, we also tried by including HOG and other features, though accuracy did not see any significant improvement. 
+
+Doing more research online, we found [this paper](http://www.robotics.stanford.edu/~ang/papers/icml11-EncodingVsTraining.pdf), where by using various unsupervised algorithms to train a dictionary/codebook to embed the data, then directly using Linear SVMs, it is possible to achieve $80\%$ accuracy on the dataset. However, similar to the k-means method, the svm and encoder is conputationally expensive. Even with random patches/random vectors as the dictionary, thus requiring no training for the dictionary, as outlined in the paper, the encoding of every data from the dataset is still painfully slow. Moreover, the feature dimension size is usually larger than 10k to get some decent accuracies, with the paper having linear SVMs of 12800 features, even with accelerated learning (tested on RTX 4090s), convergence is still very slow. However we do note that these methods are easily scaleable due to the linear runtime to train linear SVMs, thus with enough computational power, it is not hard to achieve extremely high accuracies with huge datasets.
 
 #### Model 3 (Based mostly on HOG, Daisy, EOH)
 
@@ -45,9 +47,9 @@ Then, we applied our LDA Encoder on the features which are flattened and concate
 
 #### Model 4 (Similar to Model 3)
 
-While testing different features, we have achieved (where `train_test_split=0.2` and without augmentation) $75\%$ testing accuracy with a very small model, notably having only 250 features, consisting of HOG, Daisy, the blurred out image, with dimensions reduced to 240 using PCA, and 10 extra features being the LDA encodings, which is standardized and passed through a rbf svm. This model is significant in its size, while still maintaining very high accuracy, higher than a lot of those ones found online, like this model that uses HOG, achieving $70\%$ with 3000 features or this model using the $k$-means encoding explained in Model 2 with $k=800$, corresponding to a feature dimension of 3200, which achieved a similar accuracy of $75\%$. 
+While testing different features, we have achieved (where `train_test_split=0.2` and without augmentation) nearly $75\%$ testing accuracy with a very small model, notably having only 250 features, consisting of HOG, Daisy, the blurred out image, with dimensions reduced to 240 using PCA, and 10 extra features being the LDA encodings, which is standardized and passed through a rbf svm. This model is significant in its size, while still maintaining very high accuracy, higher than a lot of those ones found online, like [this model](https://github.com/hudara/cifar-10/blob/master/cifar-10.ipynb) that uses HOG, achieving $70\%$ with 3000 features or [this model]((https://cs.stanford.edu/~acoates/papers/coatesleeng_aistats_2011.pdf)) using the k-means encoding explained in Model 2 with $k=800$, corresponding to a feature dimension of 3200, which achieved a similar accuracy of $75\%$. 
 
-Mainly, this model is trained fully on a cpu, with some acceleration provided by `scikit-learn-intelex`, it is trained in 44 minutes, which preprocessing took around 15 minutes. While the larger model, Model 3, is trained with HKU Innowing's RTX 4090s, which took 3 minutes. The larger model also has been trained on our own laptops, taking 140 minutes on a RTX 3050. 
+The most significant aspect of this model is its size, with some acceleration provided by `scikit-learn-intelex`, it is trained in 42 minutes on a cpu (preprocessing time not included in the 42 minutes), where the preprocessing took around 15 minutes. While the larger model, Model 3, is trained with HKU Innowing's RTX 4090s, which took 3 minutes. The larger model also has been trained on our own laptops, taking 140 minutes on a RTX 3050. 
 
 #### Model 5 (LDA)
 
@@ -69,11 +71,21 @@ We may notice that the accuracy of our LBP model is at around ($30\%~33%$), whic
 
 If we visualize the image generated by LBP, we may notice that for some images, the outline is barely recognizable. This makes it very hard to classify the image accurately. 
 
-<inserts image here>
+![alt text](image-1.png)
 
 This can be due to two reasons: Firstly, LBP only works on images converted to greyscale. As a result, some colour-related features have been lost when the image is converted to greyscale; Secondly, the dimensions of the images are only $32 \times 32$. This might be too low to extract useful features as the images are very blurry and the borders of some objects are not well-defined at all.
 
 It was suggested that combining HOG and LBP will increase the accuracy of the model. Thus, we have also tested a model that uses both HOG and LBP features. However, the accuracy of the model remains about the same ($66\%$). So, based on our findings, LBP might not be a suitable descriptor in this case.
+
+#### Summary
+
+Here is the accuracys (public accuracies on kaggle) of the described models:
+
+![accs](image-2.png)
+
+Note: Model 1, 4, and k-means where k = 2400 makes use of only 40k of the training data, while k-means where k = 3200 uses all data without augmentation, and Model 3 and k-means where k = 800 makes use of all the data with augmentation.
+
+### Methodology
 
 #### Fine-tuning of Regularization Parameter
 
