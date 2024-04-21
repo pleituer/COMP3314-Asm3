@@ -3,8 +3,6 @@
 ### Background and brief analysis of dataset
 In this challenge, we need to create a model that classify images into multiple classes. This dataset contains $50000$ labelled images with a dimension of $32 \times 32$. Each image is classified into one of the ten classes. While the smaller image size means that there are less dimensions to worry about, it also means that some important features might have been lost when the image size is shrunk. Therefore, we need to extract useful features in pre-processing to achieve the best result.
 
-In this challenge, we need to create a model that classify images into multiple classes. This dataset contains 50k labelled images with a dimension of $32 \times 32$. Each image is classified into one of the ten classes. While the smaller image size means that there are less dimensions to worry about, it also means that some important features might have been lost when the image size is shrunk. Therefore, we need to extract useful features in pre-processing to achieve the best result.
-
 ### Models
 
 #### Model 1 (Based solely on HOG features)
