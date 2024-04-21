@@ -57,7 +57,7 @@ This model, though not as good as the others that are showcased, ended up being 
 
 We are clear with its drawbacks, namely it does not take the clustering standard deviation into account and assumes each cluster has the same standard deviation. Nonetheless, it has shown its remarkable potential, especially without accelerated learning, where training a new svm model based on some parameters for the feature extractors takes hours. As the accuracy of this model's performance is based on how clustered each class cluster is, which the more clustered the better the final model might have, when fine tuning, we used this model, which takes less than 10 minutes to train, to determine the optimal or close-to-optimal parameters. This allows extremely fast fine-tuning of the features without loosing much accuracy. 
 
-#### Feature extraction based on LBP
+#### Feature extraction based on LBP (not sure if need)
 
 Further research on image classification suggests that LBP (Local Binary Pattern) is another potential candidate for object recognition. We used sklearn-image to generate the LBP features. Since LBP works on greyscale images, we first convert the images to greyscale before generating the LBP features.
 
